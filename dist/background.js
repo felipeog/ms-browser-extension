@@ -1,4 +1,4 @@
-function drawIcon(value) {
+function getIcon(value) {
   const canvas = document.createElement('canvas')
   const context = canvas.getContext('2d')
 
@@ -10,8 +10,8 @@ function drawIcon(value) {
   return context.getImageData(50, 50, 100, 100)
 }
 
-chrome.runtime.onMessage.addListener(function (msg) {
-  if (msg.action === 'updateIcon') {
-    chrome.browserAction.setIcon({ imageData: drawIcon(msg.value) })
+chrome.runtime.onMessage.addListener(function (message) {
+  if (message.action === 'updateIcon') {
+    chrome.browserAction.setIcon({ imageData: getIcon(message.value) })
   }
 })

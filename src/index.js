@@ -1,129 +1,196 @@
 import axios from '../node_modules/axios'
 
-// form fields
-const form = document.querySelector('.form-data')
-const regionName = document.querySelector('.region-name')
-const apiKey = document.querySelector('.api-key')
+// dom elements
+const formElements = {
+  form: document.querySelector('.form-data'),
+  regionInput: document.querySelector('.region-name'),
+  apiInput: document.querySelector('.api-key'),
+}
 
-// results
-const errors = document.querySelector('.errors')
-const loading = document.querySelector('.loading')
-const results = document.querySelector('.result-container')
-const carbonUsage = document.querySelector('.carbon-usage')
-const fossilFuel = document.querySelector('.fossil-fuel')
-const myRegion = document.querySelector('.my-region')
-const clearButton = document.querySelector('.clear-btn')
+const resultElements = {
+  errors: document.querySelector('.errors'),
+  loading: document.querySelector('.loading'),
+  results: document.querySelector('.result-container'),
+  carbonUsage: document.querySelector('.carbon-usage'),
+  fossilFuel: document.querySelector('.fossil-fuel'),
+  myRegion: document.querySelector('.my-region'),
+  changeRegionButton: document.querySelector('.change-region'),
+}
 
-function calculateColor(value) {
-  const co2Scale = [0, 150, 600, 750, 800]
+// icon handling
+function getCo2ScaleColor(value) {
+  const scale = [0, 150, 600, 750, 800]
   const colors = ['#2AA364', '#F5EB4D', '#9E4229', '#381D02', '#381D02']
-  const closestNum = co2Scale.sort((a, b) => {
-    return Math.abs(a - value) - Math.abs(b - value)
-  })[0]
-  const num = (element) => element > closestNum
-  const scaleIndex = co2Scale.findIndex(num)
-  const closestColor = colors[scaleIndex]
+  const closestScale = scale.reduce(function (previous, current) {
+    if (Math.abs(current - value) < Math.abs(previous - value)) {
+      return current
+    }
 
+    return previous
+  }, 0)
+  const scaleIndex = scale.findIndex((scale) => scale > closestScale)
+  const color = colors[scaleIndex]
+
+  return color
+}
+
+function setIconColor(color) {
   chrome.runtime.sendMessage({
     action: 'updateIcon',
-    value: { color: closestColor },
+    value: { color },
   })
 }
 
-async function displayCarbonUsage(apiKey, region) {
+// data fetching
+async function fetchRegionMetrics(apiKey, regionName) {
   try {
-    await axios
-      .get('https://api.co2signal.com/v1/latest', {
-        params: {
-          countryCode: region,
-        },
-        headers: {
-          'auth-token': apiKey,
-        },
-      })
-      .then((response) => {
-        const CO2 = Math.floor(response.data.data.carbonIntensity)
+    const response = await axios.get('https://api.co2signal.com/v1/latest', {
+      params: {
+        countryCode: regionName,
+      },
+      headers: {
+        'auth-token': apiKey,
+      },
+    })
 
-        calculateColor(CO2)
-
-        loading.style.display = 'none'
-        form.style.display = 'none'
-        myRegion.textContent = region
-        carbonUsage.textContent =
-          Math.round(response.data.data.carbonIntensity) +
-          ' grams (grams C02 emitted per kilowatt hour)'
-        fossilFuel.textContent =
-          response.data.data.fossilFuelPercentage.toFixed(2) +
-          '% (percentage of fossil fuels used to generate electricity)'
-        results.style.display = 'block'
-      })
+    return response.data.data
   } catch (error) {
-    console.error(error)
+    console.log(error)
 
-    loading.style.display = 'none'
-    results.style.display = 'none'
-    errors.textContent =
-      'Sorry, we have no data for the region you have requested.'
+    return {
+      error: true,
+      message:
+        'Error! Please, check your region name and API key, and try again.',
+    }
   }
 }
 
-function setUpUser(apiKey, regionName) {
+// rendering
+function hideAllElements() {
+  formElements.form.style.display = 'none'
+  resultElements.errors.style.display = 'none'
+  resultElements.errors.textContent = ''
+  resultElements.loading.style.display = 'none'
+  resultElements.results.style.display = 'none'
+  resultElements.changeRegionButton.style.display = 'none'
+}
+
+function renderError(message) {
+  hideAllElements()
+
+  resultElements.changeRegionButton.style.display = 'block'
+  resultElements.errors.style.display = 'block'
+  resultElements.errors.textContent = message
+}
+
+function renderLoading() {
+  hideAllElements()
+
+  resultElements.loading.style.display = 'block'
+  resultElements.changeRegionButton.style.display = 'block'
+}
+
+function renderForm() {
+  hideAllElements()
+
+  formElements.form.style.display = 'block'
+}
+
+async function renderResults(regionMetrics, regionName) {
+  hideAllElements()
+
+  const co2 = Math.round(regionMetrics.carbonIntensity)
+  const fossilFuel = regionMetrics.fossilFuelPercentage.toFixed(2)
+
+  resultElements.results.style.display = 'block'
+  resultElements.myRegion.textContent = regionName
+  resultElements.carbonUsage.textContent = `${co2} grams (grams C02 emitted per kilowatt hour)`
+  resultElements.fossilFuel.textContent = `${fossilFuel} % (percentage of fossil fuels used to generate electricity)`
+  resultElements.changeRegionButton.style.display = 'block'
+}
+
+// user handling
+function setUser(apiKey, regionName) {
   localStorage.setItem('apiKey', apiKey)
   localStorage.setItem('regionName', regionName)
-
-  loading.style.display = 'block'
-  errors.textContent = ''
-  clearButton.style.display = 'block'
-
-  displayCarbonUsage(apiKey, regionName)
 }
 
-function handleSubmit(e) {
-  e.preventDefault()
+function getUser() {
+  const apiKey = localStorage.getItem('apiKey')
+  const regionName = localStorage.getItem('regionName')
 
-  setUpUser(apiKey.value, regionName.value)
-}
+  if (!apiKey || !regionName) {
+    return null
+  }
 
-function init() {
-  const storedApiKey = localStorage.getItem('apiKey')
-  const storedRegion = localStorage.getItem('regionName')
-
-  chrome.runtime.sendMessage({
-    action: 'updateIcon',
-    value: {
-      color: 'green',
-    },
-  })
-
-  if (!storedApiKey || !storedRegion) {
-    form.style.display = 'block'
-    results.style.display = 'none'
-    loading.style.display = 'none'
-    clearButton.style.display = 'none'
-    errors.textContent = ''
-  } else {
-    displayCarbonUsage(storedApiKey, storedRegion)
-
-    results.style.display = 'none'
-    form.style.display = 'none'
-    clearButton.style.display = 'block'
+  return {
+    apiKey,
+    regionName,
   }
 }
 
-function reset(e) {
-  e.preventDefault()
-
+function resetUser() {
+  localStorage.removeItem('apiKey')
   localStorage.removeItem('regionName')
-
-  init()
 }
 
-form.addEventListener('submit', (event) => {
-  handleSubmit(event)
-})
+// event handlers
+async function handleFormSubmit(event) {
+  event.preventDefault()
 
-clearButton.addEventListener('click', (event) => {
-  reset(event)
-})
+  setUser(formElements.apiInput.value, formElements.regionInput.value)
+  renderLoading()
+
+  const regionMetrics = await fetchRegionMetrics(
+    formElements.apiInput.value,
+    formElements.regionInput.value
+  )
+
+  if (regionMetrics.error) {
+    renderError(regionMetrics.message)
+  } else {
+    const co2 = regionMetrics ? Math.floor(regionMetrics.carbonIntensity) : 0
+    const co2ScaleColor = getCo2ScaleColor(co2)
+
+    setIconColor(co2ScaleColor)
+    renderResults(regionMetrics, formElements.regionInput.value)
+  }
+}
+
+function handleRegionReset(event) {
+  event.preventDefault()
+
+  resetUser()
+  setIconColor('green')
+  renderForm()
+}
+
+// events
+formElements.form.addEventListener('submit', handleFormSubmit)
+resultElements.changeRegionButton.addEventListener('click', handleRegionReset)
+
+// initialize
+async function init() {
+  const user = getUser()
+
+  if (!user) {
+    setIconColor('green')
+    renderForm()
+  } else {
+    renderLoading()
+
+    const regionMetrics = await fetchRegionMetrics(user.apiKey, user.regionName)
+
+    if (regionMetrics.error) {
+      renderError(regionMetrics.message)
+    } else {
+      const co2 = regionMetrics ? Math.floor(regionMetrics.carbonIntensity) : 0
+      const co2ScaleColor = getCo2ScaleColor(co2)
+
+      setIconColor(co2ScaleColor)
+      renderResults(regionMetrics, user.regionName)
+    }
+  }
+}
 
 init()
