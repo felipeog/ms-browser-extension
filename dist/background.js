@@ -1,12 +1,6 @@
-chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
-  if (msg.action === 'updateIcon') {
-    chrome.browserAction.setIcon({ imageData: drawIcon(msg.value) })
-  }
-})
-//borrowed from energy lollipop extension, nice feature!
 function drawIcon(value) {
-  let canvas = document.createElement('canvas')
-  let context = canvas.getContext('2d')
+  const canvas = document.createElement('canvas')
+  const context = canvas.getContext('2d')
 
   context.beginPath()
   context.fillStyle = value.color
@@ -15,3 +9,9 @@ function drawIcon(value) {
 
   return context.getImageData(50, 50, 100, 100)
 }
+
+chrome.runtime.onMessage.addListener(function (msg) {
+  if (msg.action === 'updateIcon') {
+    chrome.browserAction.setIcon({ imageData: drawIcon(msg.value) })
+  }
+})

@@ -1,40 +1,34 @@
-//1
+import axios from '../node_modules/axios'
+
 // form fields
 const form = document.querySelector('.form-data')
-const region = document.querySelector('.region-name')
+const regionName = document.querySelector('.region-name')
 const apiKey = document.querySelector('.api-key')
 
 // results
 const errors = document.querySelector('.errors')
 const loading = document.querySelector('.loading')
 const results = document.querySelector('.result-container')
-const usage = document.querySelector('.carbon-usage')
-const fossilfuel = document.querySelector('.fossil-fuel')
-const myregion = document.querySelector('.my-region')
-const clearBtn = document.querySelector('.clear-btn')
+const carbonUsage = document.querySelector('.carbon-usage')
+const fossilFuel = document.querySelector('.fossil-fuel')
+const myRegion = document.querySelector('.my-region')
+const clearButton = document.querySelector('.clear-btn')
 
 function calculateColor(value) {
-  let co2Scale = [0, 150, 600, 750, 800]
-  let colors = ['#2AA364', '#F5EB4D', '#9E4229', '#381D02', '#381D02']
-
-  let closestNum = co2Scale.sort((a, b) => {
+  const co2Scale = [0, 150, 600, 750, 800]
+  const colors = ['#2AA364', '#F5EB4D', '#9E4229', '#381D02', '#381D02']
+  const closestNum = co2Scale.sort((a, b) => {
     return Math.abs(a - value) - Math.abs(b - value)
   })[0]
-  console.log(value + ' is closest to ' + closestNum)
-  let num = (element) => element > closestNum
-  let scaleIndex = co2Scale.findIndex(num)
-
-  let closestColor = colors[scaleIndex]
-  console.log(scaleIndex, closestColor)
+  const num = (element) => element > closestNum
+  const scaleIndex = co2Scale.findIndex(num)
+  const closestColor = colors[scaleIndex]
 
   chrome.runtime.sendMessage({
     action: 'updateIcon',
     value: { color: closestColor },
   })
 }
-
-//6
-import axios from '../node_modules/axios'
 
 async function displayCarbonUsage(apiKey, region) {
   try {
@@ -48,23 +42,24 @@ async function displayCarbonUsage(apiKey, region) {
         },
       })
       .then((response) => {
-        let CO2 = Math.floor(response.data.data.carbonIntensity)
+        const CO2 = Math.floor(response.data.data.carbonIntensity)
 
         calculateColor(CO2)
 
         loading.style.display = 'none'
         form.style.display = 'none'
-        myregion.textContent = region
-        usage.textContent =
+        myRegion.textContent = region
+        carbonUsage.textContent =
           Math.round(response.data.data.carbonIntensity) +
           ' grams (grams C02 emitted per kilowatt hour)'
-        fossilfuel.textContent =
+        fossilFuel.textContent =
           response.data.data.fossilFuelPercentage.toFixed(2) +
           '% (percentage of fossil fuels used to generate electricity)'
         results.style.display = 'block'
       })
   } catch (error) {
-    console.log(error)
+    console.error(error)
+
     loading.style.display = 'none'
     results.style.display = 'none'
     errors.textContent =
@@ -72,30 +67,27 @@ async function displayCarbonUsage(apiKey, region) {
   }
 }
 
-//5
 function setUpUser(apiKey, regionName) {
   localStorage.setItem('apiKey', apiKey)
   localStorage.setItem('regionName', regionName)
+
   loading.style.display = 'block'
   errors.textContent = ''
-  clearBtn.style.display = 'block'
-  //make initial call
+  clearButton.style.display = 'block'
+
   displayCarbonUsage(apiKey, regionName)
 }
 
-//4
 function handleSubmit(e) {
   e.preventDefault()
-  setUpUser(apiKey.value, region.value)
+
+  setUpUser(apiKey.value, regionName.value)
 }
 
-//3
 function init() {
-  //if anything is in localStorage, pick it up
   const storedApiKey = localStorage.getItem('apiKey')
   const storedRegion = localStorage.getItem('regionName')
 
-  //set icon to be generic green
   chrome.runtime.sendMessage({
     action: 'updateIcon',
     value: {
@@ -103,34 +95,35 @@ function init() {
     },
   })
 
-  if (storedApiKey === null || storedRegion === null) {
-    //if we don't have the keys, show the form
+  if (!storedApiKey || !storedRegion) {
     form.style.display = 'block'
     results.style.display = 'none'
     loading.style.display = 'none'
-    clearBtn.style.display = 'none'
+    clearButton.style.display = 'none'
     errors.textContent = ''
   } else {
-    //if we have saved keys/regions in localStorage, show results when they load
     displayCarbonUsage(storedApiKey, storedRegion)
+
     results.style.display = 'none'
     form.style.display = 'none'
-    clearBtn.style.display = 'block'
+    clearButton.style.display = 'block'
   }
 }
 
 function reset(e) {
   e.preventDefault()
-  //clear local storage for region only
+
   localStorage.removeItem('regionName')
+
   init()
 }
 
-//2
 form.addEventListener('submit', (event) => {
   handleSubmit(event)
 })
-clearBtn.addEventListener('click', (event) => {
+
+clearButton.addEventListener('click', (event) => {
   reset(event)
 })
+
 init()
