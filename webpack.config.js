@@ -1,4 +1,4 @@
-const HtmlWebpackPlugin = require('html-webpack-plugin')
+const HtmlPlugin = require('html-webpack-plugin')
 const CopyPlugin = require('copy-webpack-plugin')
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin')
 const JsonMinimizerPlugin = require('json-minimizer-webpack-plugin')
@@ -14,16 +14,8 @@ module.exports = {
     path: path.resolve(__dirname, './dist'),
     filename: '[name].js',
   },
-  module: {
-    rules: [
-      {
-        test: /\.json$/i,
-        type: 'asset/resource',
-      },
-    ],
-  },
   plugins: [
-    new HtmlWebpackPlugin({
+    new HtmlPlugin({
       template: path.resolve(__dirname, './src/index.html'),
       inject: 'body',
       chunks: ['main'],
