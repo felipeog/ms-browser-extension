@@ -37,7 +37,6 @@ function setIconColor(color) {
   })
 }
 
-// rendering
 function hideAllElements() {
   formElements.form.style.display = 'none'
   resultElements.changeRegionButton.style.display = 'none'
