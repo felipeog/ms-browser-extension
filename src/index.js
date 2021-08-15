@@ -1,6 +1,6 @@
-import Api from './api'
-import User from './user'
-import Renderer from './renderer'
+import { Api } from './api'
+import { Renderer } from './renderer'
+import { User } from './user'
 
 // event handlers
 async function handleFormSubmit(event) {
