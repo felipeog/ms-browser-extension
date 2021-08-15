@@ -10,7 +10,7 @@ function getIcon(value) {
   return context.getImageData(50, 50, 100, 100)
 }
 
-chrome.runtime.onMessage.addListener(function (message) {
+chrome.runtime.onMessage.addListener((message) => {
   if (message.action === 'updateIcon') {
     chrome.browserAction.setIcon({ imageData: getIcon(message.value) })
   }
