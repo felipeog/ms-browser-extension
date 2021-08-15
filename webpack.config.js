@@ -7,8 +7,8 @@ const path = require('path')
 module.exports = {
   mode: 'production',
   entry: {
-    main: path.resolve(__dirname, './src/index.js'),
-    background: path.resolve(__dirname, './src/background.js'),
+    main: path.resolve(__dirname, './src/js/index.js'),
+    background: path.resolve(__dirname, './src/js/background.js'),
   },
   output: {
     path: path.resolve(__dirname, './dist'),
@@ -35,12 +35,12 @@ module.exports = {
           to: path.resolve(__dirname, './dist'),
         },
         {
-          from: path.resolve(__dirname, './src/styles.css'),
-          to: path.resolve(__dirname, './dist/styles.css'),
+          from: path.resolve(__dirname, './src/css/index.css'),
+          to: path.resolve(__dirname, './dist/index.css'),
         },
         {
-          from: path.resolve(__dirname, './src/images'),
-          to: path.resolve(__dirname, './dist/images'),
+          from: path.resolve(__dirname, './src/img'),
+          to: path.resolve(__dirname, './dist/img'),
         },
       ],
     }),
