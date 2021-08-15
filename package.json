@@ -1,15 +1,13 @@
 {
-  "name": "carbon-trigger-extension",
+  "name": "ms-browser-extension",
   "version": "1.0.0",
   "description": "Carbon usage tracker",
   "main": "index.js",
   "scripts": {
-    "watch": "webpack --watch",
     "build": "webpack"
   },
   "keywords": [
-    "chrome extension",
-    "edge extension",
+    "browser extension",
     "carbon usage tracker"
   ],
   "author": "https://github.com/felipeog",
