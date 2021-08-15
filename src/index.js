@@ -1,4 +1,4 @@
-import axios from '../node_modules/axios'
+import axios from 'axios'
 
 // dom elements
 const formElements = {
@@ -19,16 +19,16 @@ const resultElements = {
 
 // icon handling
 function getCo2ScaleColor(value) {
-  const scale = [0, 150, 600, 750, 800]
-  const colors = ['#2AA364', '#F5EB4D', '#9E4229', '#381D02', '#381D02']
-  const closestScale = scale.reduce(function (previous, current) {
+  const scaleValues = [0, 200, 400, 600, 800]
+  const colors = ['#05995F', '#ECCD55', '#C27C3D', '#913627', '#331907']
+  const closestValue = scaleValues.reduce((previous, current) => {
     if (Math.abs(current - value) < Math.abs(previous - value)) {
       return current
     }
 
     return previous
   }, 0)
-  const scaleIndex = scale.findIndex((scale) => scale > closestScale)
+  const scaleIndex = scaleValues.findIndex((value) => value === closestValue)
   const color = colors[scaleIndex]
 
   return color
@@ -55,7 +55,7 @@ async function fetchRegionMetrics(apiKey, regionName) {
 
     return response.data.data
   } catch (error) {
-    console.log(error)
+    console.error(error)
 
     return {
       error: true,
@@ -68,11 +68,11 @@ async function fetchRegionMetrics(apiKey, regionName) {
 // rendering
 function hideAllElements() {
   formElements.form.style.display = 'none'
+  resultElements.changeRegionButton.style.display = 'none'
   resultElements.errors.style.display = 'none'
   resultElements.errors.textContent = ''
   resultElements.loading.style.display = 'none'
   resultElements.results.style.display = 'none'
-  resultElements.changeRegionButton.style.display = 'none'
 }
 
 function renderError(message) {
@@ -86,8 +86,8 @@ function renderError(message) {
 function renderLoading() {
   hideAllElements()
 
-  resultElements.loading.style.display = 'block'
   resultElements.changeRegionButton.style.display = 'block'
+  resultElements.loading.style.display = 'block'
 }
 
 function renderForm() {
@@ -96,17 +96,17 @@ function renderForm() {
   formElements.form.style.display = 'block'
 }
 
-async function renderResults(regionMetrics, regionName) {
+async function renderResults({ metrics, name }) {
   hideAllElements()
 
-  const co2 = Math.round(regionMetrics.carbonIntensity)
-  const fossilFuel = regionMetrics.fossilFuelPercentage.toFixed(2)
+  const co2 = Math.round(metrics.carbonIntensity)
+  const fossilFuel = metrics.fossilFuelPercentage.toFixed(2)
 
-  resultElements.results.style.display = 'block'
-  resultElements.myRegion.textContent = regionName
   resultElements.carbonUsage.textContent = `${co2} grams (grams C02 emitted per kilowatt hour)`
-  resultElements.fossilFuel.textContent = `${fossilFuel} % (percentage of fossil fuels used to generate electricity)`
   resultElements.changeRegionButton.style.display = 'block'
+  resultElements.fossilFuel.textContent = `${fossilFuel} % (percentage of fossil fuels used to generate electricity)`
+  resultElements.myRegion.textContent = name
+  resultElements.results.style.display = 'block'
 }
 
 // user handling
@@ -138,22 +138,23 @@ function resetUser() {
 async function handleFormSubmit(event) {
   event.preventDefault()
 
-  setUser(formElements.apiInput.value, formElements.regionInput.value)
+  const apiKey = formElements.apiInput.value
+  const regionName = formElements.regionInput.value
+
+  setUser(apiKey, regionName)
   renderLoading()
 
-  const regionMetrics = await fetchRegionMetrics(
-    formElements.apiInput.value,
-    formElements.regionInput.value
-  )
+  const regionMetrics = await fetchRegionMetrics(apiKey, regionName)
 
   if (regionMetrics.error) {
     renderError(regionMetrics.message)
   } else {
-    const co2 = regionMetrics ? Math.floor(regionMetrics.carbonIntensity) : 0
-    const co2ScaleColor = getCo2ScaleColor(co2)
+    const co2ScaleColor = getCo2ScaleColor(
+      Math.floor(regionMetrics.carbonIntensity)
+    )
 
     setIconColor(co2ScaleColor)
-    renderResults(regionMetrics, formElements.regionInput.value)
+    renderResults({ metrics: regionMetrics, name: regionName })
   }
 }
 
@@ -184,11 +185,12 @@ async function init() {
     if (regionMetrics.error) {
       renderError(regionMetrics.message)
     } else {
-      const co2 = regionMetrics ? Math.floor(regionMetrics.carbonIntensity) : 0
-      const co2ScaleColor = getCo2ScaleColor(co2)
+      const co2ScaleColor = getCo2ScaleColor(
+        Math.floor(regionMetrics.carbonIntensity)
+      )
 
       setIconColor(co2ScaleColor)
-      renderResults(regionMetrics, user.regionName)
+      renderResults({ metrics: regionMetrics, name: user.regionName })
     }
   }
 }
