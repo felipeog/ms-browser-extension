@@ -28,11 +28,11 @@ module.exports = {
         },
         {
           from: path.resolve(__dirname, './src/css/index.css'),
-          to: path.resolve(__dirname, './dist/index.css'),
+          to: path.resolve(__dirname, './dist'),
         },
         {
           from: path.resolve(__dirname, './src/img'),
-          to: path.resolve(__dirname, './dist/img'),
+          to: path.resolve(__dirname, './dist'),
         },
       ],
     }),
