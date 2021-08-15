@@ -2,9 +2,10 @@
 
 ## How to run
 
+- `npm i`
 - `npm run build`
 - Navigate in the browser to the extensions panel
-- Choose `load unpacked` to upload the `/dist` folder
+- Choose `load unpacked` tand upload the `/dist` folder
 
 ## Requirements
 
