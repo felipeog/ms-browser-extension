@@ -8,7 +8,7 @@
 
 ## Requirements
 
-- [An API key](https://www.co2signal.com/)
+- [A CO2 Signal API key](https://www.co2signal.com/)
 - The [region's code](http://api.electricitymap.org/v3/zones) corresponding to the [Electricity Map](https://www.electricitymap.org/map)
 
 ## Preview
