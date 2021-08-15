@@ -20,7 +20,6 @@ module.exports = {
         test: /\.json$/i,
         type: 'asset/resource',
       },
-      { test: /\.css$/, use: 'css-loader' },
     ],
   },
   plugins: [
